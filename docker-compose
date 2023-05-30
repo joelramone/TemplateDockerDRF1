@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+  gui:
+    build: .
+    command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  process:
+    build: .
+    command: python3 manage.py runserver 0.0.0.0:8001
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  backend:
+    build: .
+    command: python3 manage.py runserver 0.0.0.0:8002
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db

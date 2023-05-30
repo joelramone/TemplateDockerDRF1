@@ -1,0 +1,12 @@
+Django
+djangorestframework
+django-filter
+django-core
+markdown
+django-extensions
+django-crispy-forms
+django-taggit
+django-ckeditor
+django-ckeditor-uploader
+django-ckeditor-image-upload
+django-ckeditor-image-uploader
