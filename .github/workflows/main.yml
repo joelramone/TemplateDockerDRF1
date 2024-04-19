@@ -31,14 +31,14 @@ jobs:
     - name: Start Docker Compose services
       run: docker-compose up -d
 
+    - name: Wait for services to start
+      run: sleep 30s  # Ajusta el tiempo de espera según sea necesario
+
     - name: Django Makemigrations and Migrate
       run: |
-        docker-compose exec backend python manage.py makemigrations
-        docker-compose exec backend python manage.py migrate
-        docker-compose exec gui python manage.py makemigrations
-        docker-compose exec gui python manage.py migrate
-        docker-compose exec process python manage.py makemigrations
-        docker-compose exec process python manage.py migrate
+        docker-compose exec backend /bin/bash -c "python manage.py makemigrations && python manage.py migrate"
+        docker-compose exec gui /bin/bash -c "python manage.py makemigrations && python manage.py migrate"
+        docker-compose exec process /bin/bash -c "python manage.py makemigrations && python manage.py migrate"
 
     - name: Stop Docker Compose services
       run: docker-compose down
