@@ -23,13 +23,13 @@ jobs:
       run: |
         cd backend
         docker build -t $DOCKER_USERNAME/backend .
-        docker push $DOCKER_USERNAME/backend
+        docker push $DOCKER_USERNAME/django-backend
         cd ../gui
         docker build -t $DOCKER_USERNAME/gui .
-        docker push $DOCKER_USERNAME/gui
+        docker push $DOCKER_USERNAME/django-gui
         cd ../process
         docker build -t $DOCKER_USERNAME/process .
-        docker push $DOCKER_USERNAME/process
+        docker push $DOCKER_USERNAME/django-process
 
     - name: Start Docker Compose services
       run: docker-compose up -d
