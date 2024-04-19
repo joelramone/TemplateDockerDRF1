@@ -22,7 +22,7 @@ jobs:
     - name: Build Docker images
       run: |
         cd backend
-        docker build -t s$DOCKER_USERNAME/django-backend .
+        docker build -t $DOCKER_USERNAME/django-backend .
         docker push $DOCKER_USERNAME/django-backend
         cd ../gui
         docker build -t $DOCKER_USERNAME/django-gui .
