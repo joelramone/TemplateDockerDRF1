@@ -19,17 +19,17 @@ jobs:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and Push Docker images
+    - name: Build Docker images
       run: |
         cd backend
-        docker build -t $DOCKER_USERNAME/backend .
-        docker push $DOCKER_USERNAME/backend
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/backend .
+        docker push ${{ secrets.DOCKER_USERNAME }}/django-backend
         cd ../gui
-        docker build -t $DOCKER_USERNAME/gui .
-        docker push $DOCKER_USERNAME/gui
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/gui .
+        docker push ${{ secrets.DOCKER_USERNAME }}/django-gui
         cd ../process
-        docker build -t $DOCKER_USERNAME/process .
-        docker push $DOCKER_USERNAME/process
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/process .
+        docker push ${{ secrets.DOCKER_USERNAME }}/django-process
 
     - name: Start Docker Compose services
       run: docker-compose up -d
