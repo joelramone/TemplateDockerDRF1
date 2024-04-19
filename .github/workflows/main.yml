@@ -1,132 +1,41 @@
-#El nombre del flujo de trabajo como aparee en la pestaña "Acciones" del repositorio de Github
-#(intentar utilizar vriable de entorno para el nombre)
-name: Template Django ProyectooG
-#el nombre de las ejecucions de flujo de trabajo generadas a paartir del flujo de trabajo, 
-#que aparecerá en la lista de ejeciones de flujo de trabajo en la pestaña "Acciones"
-run-name: ${{github.actor}} esta ejecutando el job
-#Especifica el activador de este flujo de trabajo
-on: [push]
-#Agrupa todos los trabajos que se ejecuta en el flujo de trabajo Template Django Landing Page (utilizar variable)
+name: Docker Build and Django Migrate
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
-
-#construcción de la imagen donde va a correr el proyecto
-  build:
-#conigur el joba para que se ejecut en la versión más reciente de un ejecutor. (Similar a runners en BitBucket)
+  build_and_deploy:
     runs-on: ubuntu-latest
-#una estrategia de trabajo, permite usar variables en una definición de trabajo para crear automáticamente
-#varias ejecuciones de trabajos basadas en las combinaciones de las variables.
-#en este caso se utilizan varias versiones de python y se declaran las variables de base de datos
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [ 3.9]
-        database-name:
-          - django-db
-        database-password:
-          - postgres
-        database-user:
-          - postgres
-        database-host:
-          - 127.0.0.1
-        database-port:
-          - 5432
-#se usa para hospedar contenedores de servicio para un trabajo en un flujo de trabajo.
-#los contenedores de servicio son útiles para crear bases de datos o servicios de caché como Redis.
-#el ejecutor crea automáticamente una red Docker y administa el ciclo de vid de los contenedores de servicio.
-    services:
-      postgres:
-#imagen de postgress
-        image: postgres:latest
-#lee las variables arriba declaradas
-        env:
-          POSTGRES_DB: ${{ matrix.database-name }}
-          POSTGRES_USER: ${{ matrix.database-user }}
-          POSTGRES_PASSWORD: ${{ matrix.database-password }}
-        ports:
-          - 5432:5432
-        # Set health checks to wait until postgres has started
-        options:
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
 
-#agrupa odos los pasos que seejecutan ene letrabajo. cada elemento anidado debajoe
-#de esta sección es un acción o script de shell por separado
     steps:
-    - uses: actions/checkout@v2.4.0
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2.3.1
-      with:
-        python-version: ${{ matrix.python-version }}
-#instala las dependencias del requirements.txt
-    - name: Install dependencies
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to Docker Hub
+      run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+    - name: Build Docker images
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-#instala black y formatea
-    - name: Format with black
+        cd backend
+        docker build -t your_docker_username/backend .
+        cd ../gui
+        docker build -t your_docker_username/gui .
+        cd ../process
+        docker build -t your_docker_username/process .
+
+    - name: Start Docker Compose services
+      run: docker-compose up -d
+
+    - name: Django Makemigrations and Migrate
       run: |
-        pip install black
-        # format the files with black
-        black .
-#instala flake8 y scannea
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Sort imports
-#instala isort y chequea diferencias
-      run: |
-        pip install isort
-        # stop the build if there are Python syntax errors or undefined names
-        isort .
-        isort --check --diff .
-    - name: Setup test database
-      env:
-        POSTGRES_DB_NAME: ${{ matrix.database-name }}
-        POSTGRES_USER: ${{ matrix.database-user }}
-        POSTGRES_PASSWORD: ${{ matrix.database-password }}
-        POSTGRES_DB_HOST: ${{ matrix.database-host }}
-        POSTGRES_DB_PORT: ${{ matrix.database-port }}
-        POSTGRES_DB: ${{ matrix.database-name }}
-      run: |
-        export DATABASE_URL=postgres://${{ matrix.database-user }}:${{ matrix.database-password }}@${{ matrix.database-host }}:${{ matrix.database-port }}/${{ matrix.database-name }}
-        export SECRET_KEY=test-secret-key
-        export DEBUG=1
-    - name: Run migrations
-      run: |
-        export DATABASE_URL=postgres://${{ matrix.database-user }}:${{ matrix.database-password }}@${{ matrix.database-host }}:${{ matrix.database-port }}/${{ matrix.database-name }}
-        export SECRET_KEY=test-secret-key
-        export DEBUG=1
-        export ALLOWED_HOSTS=localhost
-        export GITHUB_WORKFLOW=True
-        export MODE=workflow
-        python manage.py makemigrations
-        python manage.py migrate
-        python manage.py migrate --run-syncdb
-        python manage.py check
-    - name: Run tests
-      run: |
-          python manage.py test
-      env:
-        DATABASE_URL: postgres://${{ matrix.database-user }}:${{ matrix.database-password }}@${{ matrix.database-host }}:${{ matrix.database-port }}/${{ matrix.database-name }}
-        SECRET_KEY: test-secret-key
-        DEBUG: 1
-        ALLOWED_HOSTS: localhost
-        GITHUB_WORKFLOW: True
-        MODE: workflow
-    - uses: actions/checkout@v2.4.0
-    - name: Build the images and start the containers
-      run: |
-        export GITHUB_WORKFLOW=True
-        export MODE="Test"
-        docker-compose -f docker-compose.yml build
-        docker-compose -f docker-compose.yml up -d
-        # run: docker-compose up -d --build
-    - name: Stop containers
-      if: always()
-      run: docker-compose -f "docker-compose.yml" down
+        docker-compose exec backend python manage.py makemigrations
+        docker-compose exec backend python manage.py migrate
+        docker-compose exec gui python manage.py makemigrations
+        docker-compose exec gui python manage.py migrate
+        docker-compose exec process python manage.py makemigrations
+        docker-compose exec process python manage.py migrate
+
+    - name: Stop Docker Compose services
+      run: docker-compose down
