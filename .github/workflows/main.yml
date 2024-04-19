@@ -22,14 +22,14 @@ jobs:
     - name: Build Docker images
       run: |
         cd backend
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/backend .
-        docker push ${{ secrets.DOCKER_USERNAME }}/django-backend
+        docker build -t your_docker_username/backend .
+        docker push your_docker_username/django-backend
         cd ../gui
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/gui .
-        docker push ${{ secrets.DOCKER_USERNAME }}/django-gui
+        docker build -t your_docker_username/gui .
+        docker push your_docker_username/django-gui
         cd ../process
-        docker build -t ${{ secrets.DOCKER_USERNAME }}/process .
-        docker push ${{ secrets.DOCKER_USERNAME }}/django-process
+        docker build -t your_docker_username/process .
+        docker push your_docker_username/django-process
 
     - name: Start Docker Compose services
       run: docker-compose up -d
